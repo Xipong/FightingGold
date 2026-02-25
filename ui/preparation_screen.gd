@@ -25,11 +25,13 @@ func _ready() -> void:
 
 func _refresh_stats() -> void:
 	var ps: Dictionary = RunManager.player_stats
-	stats_label.text = "HP %d/%d | STA %.0f/%.0f | GRD %.0f/%.0f | Dmg x%.2f" % [
+	stats_label.text = "HP %d/%d | STA %.0f/%.0f | GRD %.0f/%.0f | Dmg x%.2f (+L %.0f%% / +H %.0f%%)" % [
 		int(ps.get("hp", 0.0)), int(ps.get("max_hp", 0.0)),
 		float(ps.get("stamina", 0.0)), float(ps.get("max_stamina", 0.0)),
 		float(ps.get("guard", 0.0)), float(ps.get("max_guard", 0.0)),
-		float(ps.get("damage_multiplier", 1.0))
+		float(ps.get("damage_multiplier", 1.0)),
+		float(ps.get("light_damage_bonus", 0.0)) * 100.0,
+		float(ps.get("heavy_damage_bonus", 0.0)) * 100.0
 	]
 	var combo_name := combo_option.get_item_text(combo_option.selected)
 	var chain: Array = RunManager.selected_combos.get(combo_name, [])

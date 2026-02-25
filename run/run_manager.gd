@@ -20,7 +20,9 @@ const BASE_PLAYER_STATS := {
 	"punish_bonus": 1.0,
 	"recovery_reduction_light": 0,
 	"recovery_reduction_heavy": 0,
-	"heavy_armor_chance": 0.0
+	"heavy_armor_chance": 0.0,
+	"light_damage_bonus": 0.0,
+	"heavy_damage_bonus": 0.0
 }
 
 var player_stats: Dictionary = BASE_PLAYER_STATS.duplicate(true)
@@ -85,7 +87,9 @@ func on_fight_finished(victory: bool) -> void:
 func apply_upgrade(upgrade: Dictionary) -> void:
 	match upgrade.get("effect", ""):
 		"damage_tag":
-			player_stats["damage_multiplier"] = float(player_stats.get("damage_multiplier", 1.0)) + float(upgrade.get("value", 0.1))
+			var bonus := float(upgrade.get("value", 0.08))
+			player_stats["light_damage_bonus"] = float(player_stats.get("light_damage_bonus", 0.0)) + bonus
+			player_stats["heavy_damage_bonus"] = float(player_stats.get("heavy_damage_bonus", 0.0)) + bonus
 		"stamina_regen":
 			player_stats["stamina_regen"] = float(player_stats.get("stamina_regen", 10.0)) + float(upgrade.get("value", 1.0))
 		"guard_meter":
