@@ -1,0 +1,470 @@
+{
+  "jab": {
+    "name": "Jab",
+    "damage": 8,
+    "stamina_cost": 8,
+    "startup_frames": 5,
+    "active_frames": 3,
+    "recovery_frames": 8,
+    "range": 70,
+    "move_forward_distance": 8,
+    "hit_stun": 10,
+    "block_stun": 7,
+    "guard_damage": 6,
+    "poise_damage": 5,
+    "tags": [
+      "light"
+    ],
+    "combo_rules": [
+      "light",
+      "heavy",
+      "launcher"
+    ],
+    "on_hit": "none",
+    "on_block": "plus",
+    "on_whiff": "safe"
+  },
+  "hook": {
+    "name": "Hook",
+    "damage": 12,
+    "stamina_cost": 10,
+    "startup_frames": 7,
+    "active_frames": 3,
+    "recovery_frames": 10,
+    "range": 72,
+    "move_forward_distance": 7,
+    "hit_stun": 11,
+    "block_stun": 8,
+    "guard_damage": 8,
+    "poise_damage": 7,
+    "tags": [
+      "light",
+      "punish"
+    ],
+    "combo_rules": [
+      "light",
+      "heavy"
+    ],
+    "on_hit": "none",
+    "on_block": "neutral",
+    "on_whiff": "safe"
+  },
+  "step_slash": {
+    "name": "Step Slash",
+    "damage": 14,
+    "stamina_cost": 12,
+    "startup_frames": 8,
+    "active_frames": 4,
+    "recovery_frames": 12,
+    "range": 100,
+    "move_forward_distance": 25,
+    "hit_stun": 12,
+    "block_stun": 9,
+    "guard_damage": 9,
+    "poise_damage": 9,
+    "tags": [
+      "light",
+      "gap_closer"
+    ],
+    "combo_rules": [
+      "light",
+      "heavy"
+    ],
+    "on_hit": "advance",
+    "on_block": "minus",
+    "on_whiff": "punishable"
+  },
+  "gut_punch": {
+    "name": "Gut Punch",
+    "damage": 16,
+    "stamina_cost": 13,
+    "startup_frames": 9,
+    "active_frames": 3,
+    "recovery_frames": 13,
+    "range": 75,
+    "move_forward_distance": 6,
+    "hit_stun": 13,
+    "block_stun": 9,
+    "guard_damage": 12,
+    "poise_damage": 10,
+    "tags": [
+      "heavy"
+    ],
+    "combo_rules": [
+      "heavy",
+      "launcher",
+      "combo_ender"
+    ],
+    "on_hit": "stagger_small",
+    "on_block": "minus",
+    "on_whiff": "punishable"
+  },
+  "rising_kick": {
+    "name": "Rising Kick",
+    "damage": 18,
+    "stamina_cost": 16,
+    "startup_frames": 11,
+    "active_frames": 4,
+    "recovery_frames": 15,
+    "range": 80,
+    "move_forward_distance": 10,
+    "hit_stun": 15,
+    "block_stun": 11,
+    "guard_damage": 12,
+    "poise_damage": 14,
+    "tags": [
+      "launcher",
+      "heavy"
+    ],
+    "combo_rules": [
+      "combo_ender"
+    ],
+    "on_hit": "launch",
+    "on_block": "minus",
+    "on_whiff": "punishable"
+  },
+  "shoulder_bash": {
+    "name": "Shoulder Bash",
+    "damage": 20,
+    "stamina_cost": 18,
+    "startup_frames": 12,
+    "active_frames": 3,
+    "recovery_frames": 16,
+    "range": 95,
+    "move_forward_distance": 30,
+    "hit_stun": 16,
+    "block_stun": 12,
+    "guard_damage": 15,
+    "poise_damage": 16,
+    "tags": [
+      "heavy",
+      "gap_closer",
+      "armored"
+    ],
+    "combo_rules": [
+      "heavy",
+      "combo_ender"
+    ],
+    "on_hit": "wall_bounce",
+    "on_block": "minus",
+    "on_whiff": "punishable"
+  },
+  "crusher": {
+    "name": "Crusher",
+    "damage": 24,
+    "stamina_cost": 20,
+    "startup_frames": 13,
+    "active_frames": 4,
+    "recovery_frames": 18,
+    "range": 78,
+    "move_forward_distance": 8,
+    "hit_stun": 18,
+    "block_stun": 12,
+    "guard_damage": 18,
+    "poise_damage": 20,
+    "tags": [
+      "heavy",
+      "punishable"
+    ],
+    "combo_rules": [
+      "combo_ender"
+    ],
+    "on_hit": "knockdown",
+    "on_block": "very_minus",
+    "on_whiff": "punishable"
+  },
+  "sunder": {
+    "name": "Sunder",
+    "damage": 26,
+    "stamina_cost": 21,
+    "startup_frames": 14,
+    "active_frames": 3,
+    "recovery_frames": 20,
+    "range": 82,
+    "move_forward_distance": 8,
+    "hit_stun": 19,
+    "block_stun": 13,
+    "guard_damage": 22,
+    "poise_damage": 22,
+    "tags": [
+      "heavy",
+      "guard_break"
+    ],
+    "combo_rules": [
+      "combo_ender"
+    ],
+    "on_hit": "armor_break",
+    "on_block": "very_minus",
+    "on_whiff": "punishable"
+  },
+  "execute": {
+    "name": "Execute",
+    "damage": 32,
+    "stamina_cost": 24,
+    "startup_frames": 18,
+    "active_frames": 4,
+    "recovery_frames": 24,
+    "range": 80,
+    "move_forward_distance": 5,
+    "hit_stun": 24,
+    "block_stun": 16,
+    "guard_damage": 20,
+    "poise_damage": 24,
+    "tags": [
+      "heavy",
+      "combo_ender",
+      "punishable"
+    ],
+    "combo_rules": [],
+    "on_hit": "big_finish",
+    "on_block": "unsafe",
+    "on_whiff": "punishable"
+  },
+  "anvil_breaker": {
+    "name": "Anvil Breaker",
+    "damage": 22,
+    "stamina_cost": 18,
+    "startup_frames": 12,
+    "active_frames": 4,
+    "recovery_frames": 17,
+    "range": 76,
+    "move_forward_distance": 4,
+    "hit_stun": 16,
+    "block_stun": 12,
+    "guard_damage": 24,
+    "poise_damage": 16,
+    "tags": [
+      "heavy",
+      "guard_break"
+    ],
+    "combo_rules": [
+      "heavy",
+      "combo_ender"
+    ],
+    "on_hit": "guard_crack",
+    "on_block": "minus",
+    "on_whiff": "punishable"
+  },
+  "shield_splitter": {
+    "name": "Shield Splitter",
+    "damage": 20,
+    "stamina_cost": 19,
+    "startup_frames": 10,
+    "active_frames": 5,
+    "recovery_frames": 18,
+    "range": 74,
+    "move_forward_distance": 6,
+    "hit_stun": 14,
+    "block_stun": 10,
+    "guard_damage": 28,
+    "poise_damage": 12,
+    "tags": [
+      "heavy",
+      "combo_ender",
+      "guard_break"
+    ],
+    "combo_rules": [],
+    "on_hit": "guard_break",
+    "on_block": "minus",
+    "on_whiff": "punishable"
+  },
+  "backfist": {
+    "name": "Backfist",
+    "damage": 11,
+    "stamina_cost": 9,
+    "startup_frames": 6,
+    "active_frames": 3,
+    "recovery_frames": 9,
+    "range": 68,
+    "move_forward_distance": 5,
+    "hit_stun": 10,
+    "block_stun": 7,
+    "guard_damage": 7,
+    "poise_damage": 8,
+    "tags": [
+      "light",
+      "anti_air"
+    ],
+    "combo_rules": [
+      "light",
+      "heavy"
+    ],
+    "on_hit": "juggle",
+    "on_block": "neutral",
+    "on_whiff": "safe"
+  },
+  "low_sweep": {
+    "name": "Low Sweep",
+    "damage": 13,
+    "stamina_cost": 11,
+    "startup_frames": 9,
+    "active_frames": 4,
+    "recovery_frames": 14,
+    "range": 73,
+    "move_forward_distance": 7,
+    "hit_stun": 11,
+    "block_stun": 8,
+    "guard_damage": 10,
+    "poise_damage": 11,
+    "tags": [
+      "light",
+      "punishable"
+    ],
+    "combo_rules": [
+      "heavy",
+      "combo_ender"
+    ],
+    "on_hit": "trip",
+    "on_block": "minus",
+    "on_whiff": "punishable"
+  },
+  "counter_lunge": {
+    "name": "Counter Lunge",
+    "damage": 17,
+    "stamina_cost": 14,
+    "startup_frames": 7,
+    "active_frames": 2,
+    "recovery_frames": 12,
+    "range": 95,
+    "move_forward_distance": 20,
+    "hit_stun": 14,
+    "block_stun": 10,
+    "guard_damage": 11,
+    "poise_damage": 13,
+    "tags": [
+      "heavy",
+      "punish",
+      "gap_closer"
+    ],
+    "combo_rules": [
+      "heavy",
+      "combo_ender"
+    ],
+    "on_hit": "counter_bonus",
+    "on_block": "minus",
+    "on_whiff": "punishable"
+  },
+  "meteor_smash": {
+    "name": "Meteor Smash",
+    "damage": 34,
+    "stamina_cost": 28,
+    "startup_frames": 22,
+    "active_frames": 4,
+    "recovery_frames": 28,
+    "range": 84,
+    "move_forward_distance": 10,
+    "hit_stun": 28,
+    "block_stun": 18,
+    "guard_damage": 25,
+    "poise_damage": 30,
+    "tags": [
+      "heavy",
+      "combo_ender",
+      "punishable"
+    ],
+    "combo_rules": [],
+    "on_hit": "cinematic_finish",
+    "on_block": "unsafe",
+    "on_whiff": "punishable",
+    "telegraph": true
+  },
+  "iron_wall": {
+    "name": "Iron Wall",
+    "damage": 6,
+    "stamina_cost": 10,
+    "startup_frames": 4,
+    "active_frames": 6,
+    "recovery_frames": 8,
+    "range": 55,
+    "move_forward_distance": 0,
+    "hit_stun": 8,
+    "block_stun": 12,
+    "guard_damage": 6,
+    "poise_damage": 4,
+    "tags": [
+      "light",
+      "defensive"
+    ],
+    "combo_rules": [
+      "light",
+      "heavy"
+    ],
+    "on_hit": "reset",
+    "on_block": "plus",
+    "on_whiff": "safe"
+  },
+  "piercing_dash": {
+    "name": "Piercing Dash",
+    "damage": 19,
+    "stamina_cost": 16,
+    "startup_frames": 10,
+    "active_frames": 4,
+    "recovery_frames": 13,
+    "range": 120,
+    "move_forward_distance": 38,
+    "hit_stun": 14,
+    "block_stun": 10,
+    "guard_damage": 13,
+    "poise_damage": 15,
+    "tags": [
+      "heavy",
+      "gap_closer"
+    ],
+    "combo_rules": [
+      "heavy",
+      "combo_ender"
+    ],
+    "on_hit": "advance",
+    "on_block": "minus",
+    "on_whiff": "punishable"
+  },
+  "whirl_kick": {
+    "name": "Whirl Kick",
+    "damage": 21,
+    "stamina_cost": 17,
+    "startup_frames": 11,
+    "active_frames": 5,
+    "recovery_frames": 16,
+    "range": 88,
+    "move_forward_distance": 12,
+    "hit_stun": 16,
+    "block_stun": 11,
+    "guard_damage": 12,
+    "poise_damage": 17,
+    "tags": [
+      "heavy",
+      "anti_air"
+    ],
+    "combo_rules": [
+      "heavy",
+      "combo_ender"
+    ],
+    "on_hit": "spin_stagger",
+    "on_block": "minus",
+    "on_whiff": "punishable"
+  },
+  "snap_knee": {
+    "name": "Snap Knee",
+    "damage": 15,
+    "stamina_cost": 12,
+    "startup_frames": 8,
+    "active_frames": 3,
+    "recovery_frames": 10,
+    "range": 70,
+    "move_forward_distance": 8,
+    "hit_stun": 12,
+    "block_stun": 8,
+    "guard_damage": 10,
+    "poise_damage": 10,
+    "tags": [
+      "light"
+    ],
+    "combo_rules": [
+      "light",
+      "heavy"
+    ],
+    "on_hit": "none",
+    "on_block": "neutral",
+    "on_whiff": "safe"
+  }
+}

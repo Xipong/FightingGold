@@ -1,0 +1,211 @@
+[
+  {
+    "id": "u1",
+    "name": "Wind Lungs",
+    "desc": "+2 stamina regen",
+    "effect": "stamina_regen",
+    "value": 2.0
+  },
+  {
+    "id": "u2",
+    "name": "Brace Plates",
+    "desc": "+10 guard meter",
+    "effect": "guard_meter",
+    "value": 10.0
+  },
+  {
+    "id": "u3",
+    "name": "Stone Poise",
+    "desc": "+8 poise",
+    "effect": "poise",
+    "value": 8.0
+  },
+  {
+    "id": "u4",
+    "name": "Executioner",
+    "desc": "+20% damage vs stunned",
+    "effect": "stunned_damage",
+    "value": 0.2
+  },
+  {
+    "id": "u5",
+    "name": "Quick Hands",
+    "desc": "-2 recovery on light",
+    "effect": "recovery_reduction",
+    "tag": "light",
+    "value": 2
+  },
+  {
+    "id": "u6",
+    "name": "Heavy Drill",
+    "desc": "-3 recovery on heavy",
+    "effect": "recovery_reduction",
+    "tag": "heavy",
+    "value": 3
+  },
+  {
+    "id": "u7",
+    "name": "Steel Startup",
+    "desc": "+8% heavy armor chance",
+    "effect": "heavy_armor",
+    "value": 0.08
+  },
+  {
+    "id": "u8",
+    "name": "Light Mastery",
+    "desc": "+8% light/heavy damage",
+    "effect": "damage_tag",
+    "value": 0.08
+  },
+  {
+    "id": "u9",
+    "name": "Wind Lungs",
+    "desc": "+2 stamina regen",
+    "effect": "stamina_regen",
+    "value": 2.0
+  },
+  {
+    "id": "u10",
+    "name": "Brace Plates",
+    "desc": "+10 guard meter",
+    "effect": "guard_meter",
+    "value": 10.0
+  },
+  {
+    "id": "u11",
+    "name": "Stone Poise",
+    "desc": "+8 poise",
+    "effect": "poise",
+    "value": 8.0
+  },
+  {
+    "id": "u12",
+    "name": "Executioner",
+    "desc": "+20% damage vs stunned",
+    "effect": "stunned_damage",
+    "value": 0.2
+  },
+  {
+    "id": "u13",
+    "name": "Quick Hands",
+    "desc": "-2 recovery on light",
+    "effect": "recovery_reduction",
+    "tag": "light",
+    "value": 2
+  },
+  {
+    "id": "u14",
+    "name": "Heavy Drill",
+    "desc": "-3 recovery on heavy",
+    "effect": "recovery_reduction",
+    "tag": "heavy",
+    "value": 3
+  },
+  {
+    "id": "u15",
+    "name": "Steel Startup",
+    "desc": "+8% heavy armor chance",
+    "effect": "heavy_armor",
+    "value": 0.08
+  },
+  {
+    "id": "u16",
+    "name": "Light Mastery",
+    "desc": "+8% light/heavy damage",
+    "effect": "damage_tag",
+    "value": 0.08
+  },
+  {
+    "id": "u17",
+    "name": "Wind Lungs",
+    "desc": "+2 stamina regen",
+    "effect": "stamina_regen",
+    "value": 2.0
+  },
+  {
+    "id": "u18",
+    "name": "Brace Plates",
+    "desc": "+10 guard meter",
+    "effect": "guard_meter",
+    "value": 10.0
+  },
+  {
+    "id": "u19",
+    "name": "Stone Poise",
+    "desc": "+8 poise",
+    "effect": "poise",
+    "value": 8.0
+  },
+  {
+    "id": "u20",
+    "name": "Executioner",
+    "desc": "+20% damage vs stunned",
+    "effect": "stunned_damage",
+    "value": 0.2
+  },
+  {
+    "id": "u21",
+    "name": "Quick Hands",
+    "desc": "-2 recovery on light",
+    "effect": "recovery_reduction",
+    "tag": "light",
+    "value": 2
+  },
+  {
+    "id": "u22",
+    "name": "Heavy Drill",
+    "desc": "-3 recovery on heavy",
+    "effect": "recovery_reduction",
+    "tag": "heavy",
+    "value": 3
+  },
+  {
+    "id": "u23",
+    "name": "Steel Startup",
+    "desc": "+8% heavy armor chance",
+    "effect": "heavy_armor",
+    "value": 0.08
+  },
+  {
+    "id": "u24",
+    "name": "Light Mastery",
+    "desc": "+8% light/heavy damage",
+    "effect": "damage_tag",
+    "value": 0.08
+  },
+  {
+    "id": "u25",
+    "name": "Wind Lungs",
+    "desc": "+2 stamina regen",
+    "effect": "stamina_regen",
+    "value": 2.0
+  },
+  {
+    "id": "u26",
+    "name": "Brace Plates",
+    "desc": "+10 guard meter",
+    "effect": "guard_meter",
+    "value": 10.0
+  },
+  {
+    "id": "u27",
+    "name": "Stone Poise",
+    "desc": "+8 poise",
+    "effect": "poise",
+    "value": 8.0
+  },
+  {
+    "id": "u28",
+    "name": "Executioner",
+    "desc": "+20% damage vs stunned",
+    "effect": "stunned_damage",
+    "value": 0.2
+  },
+  {
+    "id": "unlock_meteor",
+    "name": "Forbidden Manual",
+    "desc": "Unlock Meteor Smash",
+    "effect": "unlock_move",
+    "move_id": "meteor_smash"
+  }
+]
