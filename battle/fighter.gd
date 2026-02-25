@@ -94,12 +94,15 @@ func step_frames() -> Dictionary:
 			return {"phase":"neutral"}
 	return {"phase":"none"}
 
-func take_hit(move_data: Dictionary, blocked: bool, punished := false) -> Dictionary:
+func take_hit(move_data: Dictionary, blocked: bool, context: Dictionary = {}) -> Dictionary:
 	var result := {"hit": true, "blocked": blocked, "guard_break": false, "stagger": false, "damage": 0.0}
+	var attack_multiplier := float(context.get("attack_multiplier", 1.0))
+	var punish_multiplier := float(context.get("punish_multiplier", 1.0))
+	var punished := bool(context.get("punished", false))
 	if blocked:
 		var guard_dmg = float(move_data.get("guard_damage", 8.0))
 		guard -= guard_dmg
-		var reduced = float(move_data.get("damage", 10.0)) * 0.35
+		var reduced = float(move_data.get("damage", 10.0)) * attack_multiplier * 0.35
 		if stamina < 20.0:
 			reduced *= 1.2
 		hp -= reduced
@@ -110,9 +113,9 @@ func take_hit(move_data: Dictionary, blocked: bool, punished := false) -> Dictio
 			set_state(State.GUARD_BREAK, 25)
 			result.guard_break = true
 	else:
-		var base = float(move_data.get("damage", 10.0)) * damage_multiplier
+		var base = float(move_data.get("damage", 10.0)) * attack_multiplier
 		if punished:
-			base *= punish_bonus
+			base *= punish_multiplier
 		hp -= base
 		result.damage = base
 		set_state(State.HITSTUN, int(move_data.get("hit_stun", 14)))

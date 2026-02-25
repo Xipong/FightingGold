@@ -23,7 +23,57 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.09, 0.1, 0.14, 1)
+color = Color(0.08, 0.09, 0.13, 1)
+
+[node name="BackGlow" type="ColorRect" parent="Arena"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -110.0
+offset_right = 300.0
+offset_bottom = 180.0
+color = Color(0.2, 0.26, 0.34, 0.55)
+
+[node name="Ground" type="ColorRect" parent="Arena"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -130.0
+color = Color(0.16, 0.15, 0.14, 1)
+
+[node name="DustLine" type="ColorRect" parent="Arena"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -132.0
+offset_bottom = -128.0
+color = Color(0.44, 0.39, 0.3, 0.75)
+
+[node name="PlayerShadow" type="ColorRect" parent="Arena"]
+unique_name_in_owner = true
+layout_mode = 1
+offset_left = 372.0
+offset_top = 316.0
+offset_right = 462.0
+offset_bottom = 334.0
+color = Color(0, 0, 0, 0.35)
+
+[node name="EnemyShadow" type="ColorRect" parent="Arena"]
+unique_name_in_owner = true
+layout_mode = 1
+offset_left = 816.0
+offset_top = 316.0
+offset_right = 906.0
+offset_bottom = 334.0
+color = Color(0, 0, 0, 0.35)
 
 [node name="SlashLayer" type="Control" parent="Arena"]
 unique_name_in_owner = true
