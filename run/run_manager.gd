@@ -49,6 +49,22 @@ func load_data() -> void:
 	all_moves = _load_json_dict("res://data/json/moves.json")
 	enemies = _load_json_array("res://data/json/enemies.json")
 	upgrades = _load_json_array("res://data/json/upgrades.json")
+	if all_moves.is_empty():
+		push_error("RunManager: moves.json is empty or unreadable. Using fallback move set.")
+		all_moves = {
+			"jab": {"name":"Jab", "damage":8.0, "range":75.0, "stamina_cost":10.0, "startup_frames":6, "active_frames":3, "recovery_frames":8, "tags":["light"]}
+		}
+	if enemies.is_empty():
+		push_warning("RunManager: enemies.json is empty or unreadable. Using training dummy fallback.")
+		enemies = [{
+			"id": "training_dummy",
+			"name": "Training Dummy",
+			"style": "bruiser",
+			"move_pool": ["jab"],
+			"stats": {"max_hp": 120.0, "max_stamina": 80.0, "max_guard": 50.0, "poise": 30.0}
+		}]
+	if upgrades.is_empty():
+		push_warning("RunManager: upgrades.json is empty or unreadable. Rewards fallback will be used.")
 	available_moves = all_moves.keys()
 	behavior_rules = [
 		{"id":"low_stamina", "enabled":true, "threshold":35.0, "action":"recover"},
@@ -67,22 +83,47 @@ func reset_run() -> void:
 	run_started.emit()
 
 func start_next_fight() -> void:
+	if enemies.is_empty():
+		push_error("RunManager.start_next_fight: no enemies available.")
+		return
 	run_depth += 1
-	var enemy_data: Dictionary = enemies[randi() % enemies.size()].duplicate(true)
+	var enemy_index := randi() % enemies.size()
+	var enemy_data: Dictionary = enemies[enemy_index].duplicate(true)
 	enemy_data["scale"] = 1.0 + float(run_depth - 1) * 0.12
 	fight_requested.emit(enemy_data)
 
 func on_fight_finished(victory: bool) -> void:
 	if victory:
 		wins += 1
-		var options: Array = []
-		while options.size() < 3:
-			var up: Dictionary = upgrades[randi() % upgrades.size()]
-			if not options.any(func(x): return x["id"] == up["id"]):
-				options.append(up)
+		var options: Array = _roll_reward_options(3)
 		reward_requested.emit(options)
 	else:
 		run_ended.emit({"wins": wins, "depth": run_depth})
+
+func _roll_reward_options(count: int) -> Array:
+	if upgrades.is_empty():
+		return [
+			{"id": "fallback_damage", "name": "Sharpen", "desc": "+8% damage", "effect": "damage_tag", "value": 0.08},
+			{"id": "fallback_guard", "name": "Guard Mesh", "desc": "+8 max guard", "effect": "guard_meter", "value": 8.0},
+			{"id": "fallback_regen", "name": "Breathing", "desc": "+1 stamina regen", "effect": "stamina_regen", "value": 1.0}
+		]
+	var pool: Array = upgrades.duplicate()
+	pool.shuffle()
+	var options: Array = []
+	for up in pool:
+		if not (up is Dictionary):
+			continue
+		if not up.has("id"):
+			continue
+		options.append(up)
+		if options.size() >= count:
+			break
+	if options.is_empty():
+		push_warning("RunManager._roll_reward_options: upgrade pool contains no valid entries.")
+		return [{"id": "fallback_damage", "name": "Sharpen", "desc": "+8% damage", "effect": "damage_tag", "value": 0.08}]
+	while options.size() < count:
+		options.append(options[options.size() % max(1, options.size())].duplicate(true))
+	return options
 
 func apply_upgrade(upgrade: Dictionary) -> void:
 	match upgrade.get("effect", ""):

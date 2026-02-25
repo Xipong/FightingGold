@@ -17,11 +17,19 @@ func _ready() -> void:
 		combo_option.add_item(c)
 	for s in SLOTS:
 		slot_option.add_item(s)
-	combo_option.item_selected.connect(func(_i): _refresh_stats())
+	if combo_option.item_count > 0:
+		combo_option.select(0)
+	if slot_option.item_count > 0:
+		slot_option.select(0)
+	if not combo_option.item_selected.is_connected(_on_combo_selected):
+		combo_option.item_selected.connect(_on_combo_selected)
 	_refresh_rules()
 	_refresh_stats()
 	%AssignButton.pressed.connect(_assign_move)
 	%StartFightButton.pressed.connect(_start_fight)
+
+func _on_combo_selected(_i: int) -> void:
+	_refresh_stats()
 
 func _refresh_stats() -> void:
 	var ps: Dictionary = RunManager.player_stats
@@ -33,7 +41,7 @@ func _refresh_stats() -> void:
 		float(ps.get("light_damage_bonus", 0.0)) * 100.0,
 		float(ps.get("heavy_damage_bonus", 0.0)) * 100.0
 	]
-	var combo_name := combo_option.get_item_text(combo_option.selected)
+	var combo_name := _selected_combo_name()
 	var chain: Array = RunManager.selected_combos.get(combo_name, [])
 	var total_damage := 0.0
 	var total_recovery := 0
@@ -53,8 +61,8 @@ func _assign_move() -> void:
 	if move_list.get_selected_items().is_empty():
 		return
 	var move_id := move_list.get_item_text(move_list.get_selected_items()[0])
-	var combo := combo_option.get_item_text(combo_option.selected)
-	var slot := slot_option.selected
+	var combo := _selected_combo_name()
+	var slot := clamp(slot_option.selected, 0, SLOTS.size() - 1)
 	var chain: Array = RunManager.selected_combos.get(combo, []).duplicate()
 	while chain.size() < SLOTS.size():
 		chain.append(move_id)
@@ -83,7 +91,17 @@ func _combo_is_valid(chain: Array) -> bool:
 			return false
 	return true
 
+func _selected_combo_name() -> String:
+	if combo_option.item_count <= 0:
+		push_warning("PreparationScreen: no combos available, fallback to default")
+		return "default"
+	var selected := clamp(combo_option.selected, 0, combo_option.item_count - 1)
+	return combo_option.get_item_text(selected)
+
 func _start_fight() -> void:
+	if RunManager.enemies.is_empty():
+		push_error("PreparationScreen: cannot start fight, no enemies loaded.")
+		return
 	get_tree().change_scene_to_file("res://scenes/FightScreen.tscn")
 
 func _unhandled_input(event: InputEvent) -> void:
