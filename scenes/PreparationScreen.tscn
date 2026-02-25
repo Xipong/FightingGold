@@ -70,8 +70,10 @@ size_flags_horizontal = 3
 [node name="StartFightButton" type="Button" parent="."]
 unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 12
+anchor_top = 1.0
 anchor_right = 1.0
+anchor_bottom = 1.0
 offset_left = 20.0
 offset_top = -60.0
 offset_right = -20.0

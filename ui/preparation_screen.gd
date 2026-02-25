@@ -85,3 +85,7 @@ func _combo_is_valid(chain: Array) -> bool:
 
 func _start_fight() -> void:
 	get_tree().change_scene_to_file("res://scenes/FightScreen.tscn")
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_accept"):
+		_start_fight()
