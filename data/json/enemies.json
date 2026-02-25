@@ -1,0 +1,65 @@
+[
+  {
+    "id": "bruiser",
+    "name": "Iron Bruiser",
+    "style": "bruiser",
+    "stats": {
+      "max_hp": 170,
+      "max_stamina": 90,
+      "stamina_regen": 10,
+      "max_guard": 75,
+      "guard_regen": 4,
+      "poise": 65
+    },
+    "move_pool": [
+      "jab",
+      "shoulder_bash",
+      "crusher",
+      "meteor_smash",
+      "anvil_breaker"
+    ],
+    "signature": "meteor_smash"
+  },
+  {
+    "id": "duelist",
+    "name": "Velvet Duelist",
+    "style": "duelist",
+    "stats": {
+      "max_hp": 130,
+      "max_stamina": 120,
+      "stamina_regen": 16,
+      "max_guard": 55,
+      "guard_regen": 7,
+      "poise": 35
+    },
+    "move_pool": [
+      "jab",
+      "hook",
+      "counter_lunge",
+      "low_sweep",
+      "whirl_kick"
+    ],
+    "signature": "counter_lunge"
+  },
+  {
+    "id": "tank",
+    "name": "Bastion Guarder",
+    "style": "tank",
+    "stats": {
+      "max_hp": 200,
+      "max_stamina": 85,
+      "stamina_regen": 9,
+      "max_guard": 110,
+      "guard_regen": 9,
+      "poise": 80
+    },
+    "move_pool": [
+      "iron_wall",
+      "anvil_breaker",
+      "shield_splitter",
+      "gut_punch",
+      "piercing_dash"
+    ],
+    "signature": "shield_splitter"
+  }
+]
