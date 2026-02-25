@@ -1,4 +1,5 @@
 extends Node
+class_name FXManagerNode
 
 signal hit_stop(duration: float)
 signal camera_shake(power: float, duration: float)
