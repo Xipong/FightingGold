@@ -1,5 +1,5 @@
 extends Node
-class_name RunManager
+class_name RunManagerNode
 
 signal run_started
 signal fight_requested(enemy_data: Dictionary)
