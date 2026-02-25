@@ -1,5 +1,9 @@
 extends Control
 
+const FighterScript = preload("res://battle/fighter.gd")
+const PlayerAIScript = preload("res://ai/player_ai.gd")
+const EnemyAIScript = preload("res://ai/enemy_ai.gd")
+
 @onready var arena: Control = %Arena
 @onready var slash_layer: Control = %SlashLayer
 @onready var impact_flash: ColorRect = %ImpactFlash
@@ -17,11 +21,21 @@ extends Control
 @onready var enemy_guard: ProgressBar = %EnemyGuard
 @onready var status_line: Label = %StatusLine
 @onready var combo_line: Label = %ComboLine
+@onready var arena_glow: ColorRect = %BackGlow
+@onready var telegraph_ring: ColorRect = %TelegraphRing
+@onready var player_core: ColorRect = %PlayerCore
+@onready var enemy_core: ColorRect = %EnemyCore
+@onready var player_head: ColorRect = %PlayerHead
+@onready var enemy_head: ColorRect = %EnemyHead
+@onready var player_arm: ColorRect = %PlayerArm
+@onready var enemy_arm: ColorRect = %EnemyArm
+@onready var player_leg: ColorRect = %PlayerLeg
+@onready var enemy_leg: ColorRect = %EnemyLeg
 
-var player := Fighter.new()
-var enemy := Fighter.new()
-var player_ai := PlayerAI.new()
-var enemy_ai := EnemyAI.new()
+var player: Fighter = FighterScript.new()
+var enemy: Fighter = FighterScript.new()
+var player_ai: PlayerAI = PlayerAIScript.new()
+var enemy_ai: EnemyAI = EnemyAIScript.new()
 
 var enemy_data: Dictionary = {}
 var distance := 130.0
@@ -44,6 +58,9 @@ var enemy_scale_boost := 0.0
 var elapsed := 0.0
 var player_tint := Color("5cc8ff")
 var enemy_tint := Color("ff6b6b")
+var player_anticipation := 0.0
+var enemy_anticipation := 0.0
+var arena_chromatic_boost := 0.0
 
 const ATTACK_VFX := {
 	"jab": {"lunge": 18.0, "scale": 0.08, "trail": 1, "angle": 4.0, "width": 48.0, "thickness": 5.0, "travel": 20.0, "color": Color(0.78, 0.93, 1.0, 0.9)},
@@ -72,11 +89,22 @@ func _ready() -> void:
 	add_child(enemy)
 	arena_origin = arena.position
 	impact_flash.modulate.a = 0.0
-	RunManager.fight_requested.connect(_on_fight_requested)
-	FXManager.combat_log.connect(_append_log)
-	FXManager.hit_stop.connect(_on_hit_stop)
-	FXManager.camera_shake.connect(_on_camera_shake)
-	FXManager.telegraph_flash.connect(_on_telegraph_flash)
+	_set_bar_styles()
+	if not RunManager.fight_requested.is_connected(_on_fight_requested):
+		RunManager.fight_requested.connect(_on_fight_requested)
+	if not FXManager.combat_log.is_connected(_append_log):
+		FXManager.combat_log.connect(_append_log)
+	if not FXManager.hit_stop.is_connected(_on_hit_stop):
+		FXManager.hit_stop.connect(_on_hit_stop)
+	if not FXManager.camera_shake.is_connected(_on_camera_shake):
+		FXManager.camera_shake.connect(_on_camera_shake)
+	if not FXManager.telegraph_flash.is_connected(_on_telegraph_flash):
+		FXManager.telegraph_flash.connect(_on_telegraph_flash)
+	if RunManager.enemies.is_empty():
+		push_error("BattleController: RunManager has no enemies; cannot start fight.")
+		status_line.text = "No enemies loaded. Check data/json/enemies.json"
+		set_process(false)
+		return
 	RunManager.start_next_fight()
 
 func _process(delta: float) -> void:
@@ -104,7 +132,11 @@ func _process(delta: float) -> void:
 func _on_fight_requested(data: Dictionary) -> void:
 	enemy_data = data
 	player.configure_from_stats("Player", RunManager.player_stats, true)
-	var scaled: Dictionary = data.get("stats", {}).duplicate(true)
+	var stats := data.get("stats", {})
+	if not (stats is Dictionary):
+		push_warning("BattleController: enemy stats missing, using defaults.")
+		stats = {}
+	var scaled: Dictionary = stats.duplicate(true)
 	var mult := float(data.get("scale", 1.0))
 	scaled["max_hp"] = float(scaled.get("max_hp", 100)) * mult
 	scaled["hp"] = scaled["max_hp"]
@@ -120,6 +152,7 @@ func _on_fight_requested(data: Dictionary) -> void:
 	log_label.clear()
 	status_line.text = "Fight: %s" % enemy.fighter_name
 	telegraph_label.text = ""
+	telegraph_ring.modulate.a = 0.0
 	_append_log("[b]Enemy:[/b] %s enters the arena." % enemy.fighter_name)
 
 func _resolve_actions() -> void:
@@ -165,6 +198,7 @@ func _take_player_action() -> void:
 			var combo_name := String(action.get("combo", "default"))
 			var chain: Array = RunManager.selected_combos.get(combo_name, [])
 			if chain.is_empty():
+				push_warning("BattleController: combo '%s' is empty." % combo_name)
 				return
 			var move_id: String = chain[player.combo_index % chain.size()]
 			if action.get("prefer_tag", "") != "":
@@ -173,6 +207,9 @@ func _take_player_action() -> void:
 						move_id = candidate
 						break
 			var move_data: Dictionary = RunManager.all_moves.get(move_id, {})
+			if move_data.is_empty():
+				push_warning("BattleController: move '%s' missing from all_moves." % move_id)
+				return
 			if _move_allowed(player.current_move, move_data):
 				var tuned := _tuned_move(move_data, true)
 				tuned["id"] = move_id
@@ -185,6 +222,9 @@ func _take_enemy_action() -> void:
 	if move_id == "":
 		return
 	var data: Dictionary = RunManager.all_moves.get(move_id, {})
+	if data.is_empty():
+		push_warning("BattleController: enemy requested missing move '%s'." % move_id)
+		return
 	var move_with_id := data.duplicate(true)
 	move_with_id["id"] = move_id
 	if enemy.enter_move(move_with_id):
@@ -210,9 +250,10 @@ func _apply_hit(event: Dictionary) -> void:
 		"punish_multiplier": attacker.punish_bonus,
 		"punished": defender.just_whiffed_punishable
 	})
-	FXManager.emit_hit_stop(0.07 if move.get("tags", []).has("heavy") else 0.04)
-	FXManager.emit_camera_shake(9.0 if move.get("tags", []).has("heavy") else 4.0, 0.10)
-	_play_hit_animation(defender, blocked, move)
+	var heavy := move.get("tags", []).has("heavy")
+	FXManager.emit_hit_stop(0.08 if heavy else 0.04)
+	FXManager.emit_camera_shake(11.0 if heavy else 4.0, 0.12 if heavy else 0.08)
+	_play_hit_animation(defender, blocked, move, result)
 
 	if blocked:
 		_append_log("%s blocks %s (%s) %.1f" % [defender.fighter_name, attacker.fighter_name, move.get("name", "move"), result.get("damage", 0.0)])
@@ -246,7 +287,9 @@ func _is_in_range(move: Dictionary) -> bool:
 func _play_attack_animation(attacker: Fighter, move: Dictionary) -> void:
 	var move_id := String(move.get("id", ""))
 	var profile := _attack_profile(move_id, move)
+	var heavy := move.get("tags", []).has("heavy")
 	if attacker.is_player:
+		player_anticipation = max(player_anticipation, 0.12 if heavy else 0.06)
 		player_lunge = max(player_lunge, float(profile.get("lunge", 28.0)))
 		player_scale_boost = max(player_scale_boost, float(profile.get("scale", 0.1)))
 		player_tint = Color(1.0, 0.95, 0.78)
@@ -254,6 +297,7 @@ func _play_attack_animation(attacker: Fighter, move: Dictionary) -> void:
 			player_hit_bump = min(player_hit_bump, -float(profile.get("lift", 0.0)))
 		_spawn_move_vfx(player_sprite.global_position + Vector2(70, float(profile.get("y_offset", 80.0))), true, profile)
 	else:
+		enemy_anticipation = max(enemy_anticipation, 0.12 if heavy else 0.06)
 		enemy_lunge = max(enemy_lunge, float(profile.get("lunge", 28.0)))
 		enemy_scale_boost = max(enemy_scale_boost, float(profile.get("scale", 0.1)))
 		enemy_tint = Color(1.0, 0.95, 0.78)
@@ -261,19 +305,26 @@ func _play_attack_animation(attacker: Fighter, move: Dictionary) -> void:
 			enemy_hit_bump = max(enemy_hit_bump, float(profile.get("lift", 0.0)))
 		_spawn_move_vfx(enemy_sprite.global_position + Vector2(20, float(profile.get("y_offset", 80.0))), false, profile)
 
-func _play_hit_animation(defender: Fighter, blocked: bool, move: Dictionary) -> void:
+func _play_hit_animation(defender: Fighter, blocked: bool, move: Dictionary, result: Dictionary) -> void:
 	var heavy := move.get("tags", []).has("heavy")
 	if defender.is_player:
-		player_hit_bump = max(player_hit_bump, 30.0 if heavy else 18.0)
-		player_tint = Color(1.0, 0.75, 0.75) if not blocked else Color(0.8, 0.95, 1.0)
+		player_hit_bump = max(player_hit_bump, 34.0 if heavy else 18.0)
+		player_tint = Color(1.0, 0.75, 0.75) if not blocked else Color(0.74, 0.93, 1.0)
 	else:
-		enemy_hit_bump = max(enemy_hit_bump, 30.0 if heavy else 18.0)
-		enemy_tint = Color(1.0, 0.75, 0.75) if not blocked else Color(0.8, 0.95, 1.0)
-	var flash_color := Color(1, 0.9, 0.85, 0.24)
+		enemy_hit_bump = max(enemy_hit_bump, 34.0 if heavy else 18.0)
+		enemy_tint = Color(1.0, 0.75, 0.75) if not blocked else Color(0.74, 0.93, 1.0)
+	var flash_color := Color(1.0, 0.85, 0.82, 0.26)
 	if blocked:
-		flash_color = Color(0.6, 0.85, 1.0, 0.2)
+		flash_color = Color(0.5, 0.86, 1.0, 0.22)
+	if result.get("guard_break", false):
+		flash_color = Color(1.0, 0.76, 0.28, 0.34)
+	if result.get("stagger", false):
+		flash_color = Color(1.0, 0.52, 0.44, 0.3)
 	impact_flash.color = flash_color
 	impact_flash.modulate.a = flash_color.a
+	var impact_pos := player_sprite.global_position if defender.is_player else enemy_sprite.global_position
+	_spawn_impact_burst(impact_pos + Vector2(46.0, 80.0), blocked, heavy)
+	arena_chromatic_boost = max(arena_chromatic_boost, 0.18 if heavy else 0.09)
 
 func _play_defense_animation(target: Fighter, dodge: bool) -> void:
 	if target.is_player:
@@ -281,13 +332,13 @@ func _play_defense_animation(target: Fighter, dodge: bool) -> void:
 			player_hit_bump = -24.0
 			player_tint = Color(0.85, 1.0, 1.0)
 		else:
-			player_tint = Color(0.8, 0.95, 1.0)
+			player_tint = Color(0.76, 0.95, 1.0)
 	else:
 		if dodge:
 			enemy_hit_bump = 24.0
 			enemy_tint = Color(0.85, 1.0, 1.0)
 		else:
-			enemy_tint = Color(0.8, 0.95, 1.0)
+			enemy_tint = Color(0.76, 0.95, 1.0)
 
 func _attack_profile(move_id: String, move: Dictionary) -> Dictionary:
 	var base := ATTACK_VFX.get(move_id, {}).duplicate(true)
@@ -320,6 +371,21 @@ func _spawn_move_vfx(pos: Vector2, left_to_right: bool, profile: Dictionary) -> 
 			"duration": 0.11 + float(i) * 0.02
 		})
 
+func _spawn_impact_burst(pos: Vector2, blocked: bool, heavy: bool) -> void:
+	for i in range(4 if heavy else 2):
+		var streak := ColorRect.new()
+		streak.custom_minimum_size = Vector2(24.0 + i * 8.0, 3.0 + i)
+		streak.position = slash_layer.get_global_transform().affine_inverse() * pos
+		streak.pivot_offset = streak.custom_minimum_size * 0.5
+		streak.rotation = deg_to_rad(randf_range(-30.0, 30.0) + i * 35.0)
+		streak.color = Color(0.65, 0.9, 1.0, 0.9) if blocked else Color(1.0, 0.86, 0.66, 0.95)
+		slash_layer.add_child(streak)
+		var tween := create_tween()
+		tween.tween_property(streak, "scale", Vector2(1.7, 1.0), 0.08)
+		tween.parallel().tween_property(streak, "modulate:a", 0.0, 0.14)
+		tween.parallel().tween_property(streak, "position:y", streak.position.y - (10.0 + i * 3.0), 0.12)
+		tween.finished.connect(func(): streak.queue_free())
+
 func _spawn_slash(pos: Vector2, left_to_right: bool, data: Dictionary) -> void:
 	var slash := ColorRect.new()
 	slash.custom_minimum_size = Vector2(float(data.get("width", 56.0)), float(data.get("thickness", 6.0)))
@@ -332,9 +398,9 @@ func _spawn_slash(pos: Vector2, left_to_right: bool, data: Dictionary) -> void:
 	var duration := float(data.get("duration", 0.12))
 	var travel := float(data.get("travel", 34.0)) * (1.0 if left_to_right else -1.0)
 	var t = create_tween()
-	t.tween_property(slash, "scale", Vector2(1.35, 1.08), min(0.07, duration * 0.6))
+	t.tween_property(slash, "scale", Vector2(1.38, 1.08), min(0.07, duration * 0.6)).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	t.parallel().tween_property(slash, "modulate:a", 0.0, duration)
-	t.parallel().tween_property(slash, "position:x", slash.position.x + travel, duration)
+	t.parallel().tween_property(slash, "position:x", slash.position.x + travel, duration).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
 	t.finished.connect(func(): slash.queue_free())
 
 func _tuned_move(move_data: Dictionary, from_player: bool) -> Dictionary:
@@ -360,27 +426,39 @@ func _move_allowed(prev: Dictionary, nxt: Dictionary) -> bool:
 
 func _update_visual_positions() -> void:
 	var t = clamp(distance / 260.0, 0.0, 1.0)
-	player_sprite.position.x = lerp(360.0, 560.0, 1.0 - t) + player_lunge - player_hit_bump
-	enemy_sprite.position.x = lerp(820.0, 640.0, 1.0 - t) - enemy_lunge + enemy_hit_bump
+	var bob := sin(elapsed * 3.2)
+	var player_base_x := lerp(360.0, 560.0, 1.0 - t)
+	var enemy_base_x := lerp(820.0, 640.0, 1.0 - t)
+	var player_lean := player_anticipation * 22.0
+	var enemy_lean := enemy_anticipation * 22.0
+	player_sprite.position.x = player_base_x + player_lunge - player_hit_bump - player_lean
+	enemy_sprite.position.x = enemy_base_x - enemy_lunge + enemy_hit_bump + enemy_lean
+	player_sprite.position.y = 160.0 + bob * 3.0
+	enemy_sprite.position.y = 160.0 - bob * 3.0
 	player_shadow.position.x = player_sprite.position.x + 12.0
 	enemy_shadow.position.x = enemy_sprite.position.x - 4.0
+	player_shadow.scale = Vector2(1.0 - abs(bob) * 0.05, 1.0)
+	enemy_shadow.scale = Vector2(1.0 - abs(bob) * 0.05, 1.0)
+
 	var base_player := Color("ffd166") if player.state == Fighter.State.STAGGER else Color("5cc8ff")
 	var base_enemy := Color("ffd166") if enemy.state == Fighter.State.STAGGER else Color("ff6b6b")
 	player_tint = player_tint.lerp(base_player, 0.24)
 	enemy_tint = enemy_tint.lerp(base_enemy, 0.24)
 	player_sprite.color = player_tint
 	enemy_sprite.color = enemy_tint
-	var bob := sin(elapsed * 3.2)
-	player_sprite.position.y = 160.0 + bob * 3.0
-	enemy_sprite.position.y = 160.0 - bob * 3.0
-	player_shadow.scale = Vector2(1.0 - abs(bob) * 0.04, 1.0)
-	enemy_shadow.scale = Vector2(1.0 - abs(bob) * 0.04, 1.0)
+	player_core.color = player_tint.darkened(0.14)
+	enemy_core.color = enemy_tint.darkened(0.14)
+
 	if player.state == Fighter.State.STARTUP:
-		player_scale_boost = max(player_scale_boost, 0.06)
+		player_scale_boost = max(player_scale_boost, 0.07)
 	if enemy.state == Fighter.State.STARTUP:
-		enemy_scale_boost = max(enemy_scale_boost, 0.06)
-	player_sprite.scale = Vector2(1.0 + player_scale_boost, 1.0 - player_scale_boost * 0.55)
-	enemy_sprite.scale = Vector2(1.0 + enemy_scale_boost, 1.0 - enemy_scale_boost * 0.55)
+		enemy_scale_boost = max(enemy_scale_boost, 0.07)
+	var p_scale := Vector2(1.0 + player_scale_boost - player_anticipation * 0.06, 1.0 - player_scale_boost * 0.52 + player_anticipation * 0.05)
+	var e_scale := Vector2(1.0 + enemy_scale_boost - enemy_anticipation * 0.06, 1.0 - enemy_scale_boost * 0.52 + enemy_anticipation * 0.05)
+	player_sprite.scale = p_scale
+	enemy_sprite.scale = e_scale
+	player_head.position.y = 6.0 + sin(elapsed * 5.5) * 1.6
+	enemy_head.position.y = 6.0 - sin(elapsed * 5.5) * 1.6
 
 func _update_ui() -> void:
 	player_hp.max_value = player.max_hp
@@ -399,7 +477,8 @@ func _update_ui() -> void:
 
 func _append_log(t: String) -> void:
 	if is_instance_valid(log_label):
-		log_label.append_text(t + "\n")
+		log_label.append_text("• " + t + "\n")
+		log_label.scroll_to_line(log_label.get_line_count())
 
 func _on_hit_stop(duration: float) -> void:
 	hit_stop_timer = max(hit_stop_timer, duration)
@@ -409,8 +488,12 @@ func _on_camera_shake(power: float, duration: float) -> void:
 	shake_timer = max(shake_timer, duration)
 
 func _on_telegraph_flash(target: String) -> void:
-	telegraph_label.text = "TELEGRAPH: %s heavy incoming" % target.capitalize()
-	telegraph_label.modulate = Color(1.0, 0.4, 0.2, 1.0)
+	telegraph_label.text = "HEAVY INCOMING: %s" % target.capitalize()
+	telegraph_label.modulate = Color(1.0, 0.56, 0.3, 1.0)
+	telegraph_ring.modulate.a = 0.8
+	var pulse := create_tween()
+	pulse.tween_property(telegraph_ring, "scale", Vector2(1.2, 1.2), 0.22).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	pulse.tween_property(telegraph_ring, "scale", Vector2(1.0, 1.0), 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 
 func _update_fx(delta: float) -> void:
 	if shake_timer > 0.0:
@@ -420,11 +503,14 @@ func _update_fx(delta: float) -> void:
 		arena.position = arena_origin
 		shake_power = 0.0
 	if telegraph_label.text != "":
-		telegraph_label.modulate.a = max(0.0, telegraph_label.modulate.a - delta * 1.2)
+		telegraph_label.modulate.a = max(0.0, telegraph_label.modulate.a - delta * 1.05)
+		telegraph_ring.modulate.a = max(0.0, telegraph_ring.modulate.a - delta * 1.8)
 		if telegraph_label.modulate.a <= 0.05:
 			telegraph_label.text = ""
 	if impact_flash.modulate.a > 0.0:
-		impact_flash.modulate.a = max(0.0, impact_flash.modulate.a - delta * 3.2)
+		impact_flash.modulate.a = max(0.0, impact_flash.modulate.a - delta * 3.4)
+	arena_chromatic_boost = move_toward(arena_chromatic_boost, 0.0, delta * 0.9)
+	arena_glow.modulate = Color(1.0 + arena_chromatic_boost, 1.0, 1.0 + arena_chromatic_boost * 0.5, 1.0)
 
 func _decay_animation_params(delta: float) -> void:
 	player_lunge = move_toward(player_lunge, 0.0, 220.0 * delta)
@@ -433,6 +519,20 @@ func _decay_animation_params(delta: float) -> void:
 	enemy_hit_bump = move_toward(enemy_hit_bump, 0.0, 260.0 * delta)
 	player_scale_boost = move_toward(player_scale_boost, 0.0, 2.8 * delta)
 	enemy_scale_boost = move_toward(enemy_scale_boost, 0.0, 2.8 * delta)
+	player_anticipation = move_toward(player_anticipation, 0.0, 1.8 * delta)
+	enemy_anticipation = move_toward(enemy_anticipation, 0.0, 1.8 * delta)
+
+func _set_bar_styles() -> void:
+	player_hp.modulate = Color(0.94, 0.32, 0.4)
+	enemy_hp.modulate = Color(0.97, 0.42, 0.36)
+	player_stamina.modulate = Color(0.43, 0.86, 0.92)
+	enemy_stamina.modulate = Color(0.89, 0.76, 0.42)
+	player_guard.modulate = Color(0.56, 0.75, 1.0)
+	enemy_guard.modulate = Color(0.93, 0.67, 0.49)
+	status_line.add_theme_color_override("font_color", Color(0.87, 0.91, 0.98))
+	combo_line.add_theme_color_override("font_color", Color(0.78, 0.9, 1.0))
+	telegraph_label.add_theme_color_override("font_outline_color", Color(0.1, 0.05, 0.03))
+	telegraph_label.add_theme_constant_override("outline_size", 2)
 
 func _finish_fight() -> void:
 	RunManager.player_stats["hp"] = player.hp
