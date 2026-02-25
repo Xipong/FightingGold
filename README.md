@@ -18,6 +18,7 @@
 - Приоритетные правила автобоя игрока (top priority wins).
 - 3 архетипа врагов: Bruiser / Duelist / Tank.
 - Placeholder-визуал бойцов + telegraph label + hit-stop/camera shake hooks.
+- Добавлены анимации ударов: lunge, hit reaction, slash-trails и impact flash.
 
 ## Структура проекта
 - `battle/` — state machine бойцов, combat loop, hit resolution.

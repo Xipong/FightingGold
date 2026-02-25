@@ -1,6 +1,8 @@
 extends Control
 
 @onready var arena: Control = %Arena
+@onready var slash_layer: Control = %SlashLayer
+@onready var impact_flash: ColorRect = %ImpactFlash
 @onready var player_sprite: ColorRect = %PlayerFighter
 @onready var enemy_sprite: ColorRect = %EnemyFighter
 @onready var telegraph_label: Label = %TelegraphLabel
@@ -30,10 +32,18 @@ var shake_power := 0.0
 var shake_timer := 0.0
 var arena_origin := Vector2.ZERO
 
+var player_lunge := 0.0
+var enemy_lunge := 0.0
+var player_hit_bump := 0.0
+var enemy_hit_bump := 0.0
+var player_scale_boost := 0.0
+var enemy_scale_boost := 0.0
+
 func _ready() -> void:
 	add_child(player)
 	add_child(enemy)
 	arena_origin = arena.position
+	impact_flash.modulate.a = 0.0
 	RunManager.fight_requested.connect(_on_fight_requested)
 	FXManager.combat_log.connect(_append_log)
 	FXManager.hit_stop.connect(_on_hit_stop)
@@ -43,6 +53,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_update_fx(delta)
+	_decay_animation_params(delta)
 	if hit_stop_timer > 0.0:
 		hit_stop_timer -= delta
 		return
@@ -86,8 +97,10 @@ func _resolve_actions() -> void:
 	var e_state = enemy.step_frames()
 	if p_state.get("phase") == "active_start":
 		pending_hit = {"attacker": player, "defender": enemy, "move": p_state["move"]}
+		_play_attack_animation(player, p_state["move"])
 	if e_state.get("phase") == "active_start":
 		enemy_pending_hit = {"attacker": enemy, "defender": player, "move": e_state["move"]}
+		_play_attack_animation(enemy, e_state["move"])
 
 	if not pending_hit.is_empty():
 		_apply_hit(pending_hit)
@@ -105,8 +118,12 @@ func _take_player_action() -> void:
 		"reaction":
 			if not player.force_dodge():
 				player.force_block()
+				_play_defense_animation(player, false)
+			else:
+				_play_defense_animation(player, true)
 		"block":
-			player.force_block()
+			if player.force_block():
+				_play_defense_animation(player, false)
 		"combo":
 			var combo_name := String(action.get("combo", "default"))
 			var chain: Array = RunManager.selected_combos.get(combo_name, [])
@@ -148,18 +165,70 @@ func _apply_hit(event: Dictionary) -> void:
 	var result = defender.take_hit(move, blocked, punished)
 	FXManager.emit_hit_stop(0.07 if move.get("tags", []).has("heavy") else 0.04)
 	FXManager.emit_camera_shake(9.0 if move.get("tags", []).has("heavy") else 4.0, 0.10)
+	_play_hit_animation(defender, blocked, move)
 
-	var line: String
 	if blocked:
-		line = "%s blocks %s (%s) %.1f"
-		_append_log(line % [defender.fighter_name, attacker.fighter_name, move.get("name", "move"), result.get("damage", 0.0)])
+		_append_log("%s blocks %s (%s) %.1f" % [defender.fighter_name, attacker.fighter_name, move.get("name", "move"), result.get("damage", 0.0)])
 	else:
-		line = "%s hits %s with %s for %.1f"
-		_append_log(line % [attacker.fighter_name, defender.fighter_name, move.get("name", "move"), result.get("damage", 0.0)])
+		_append_log("%s hits %s with %s for %.1f" % [attacker.fighter_name, defender.fighter_name, move.get("name", "move"), result.get("damage", 0.0)])
 	if result.get("guard_break", false):
 		_append_log("[color=yellow]GUARD BREAK![/color] %s is vulnerable." % defender.fighter_name)
 	if result.get("stagger", false):
 		_append_log("[color=red]STAGGER![/color] %s can be punished." % defender.fighter_name)
+
+func _play_attack_animation(attacker: Fighter, move: Dictionary) -> void:
+	var heavy := move.get("tags", []).has("heavy")
+	var lunge := 48.0 if heavy else 28.0
+	if attacker.is_player:
+		player_lunge = max(player_lunge, lunge)
+		player_scale_boost = max(player_scale_boost, 0.16 if heavy else 0.1)
+		_spawn_slash(player_sprite.global_position + Vector2(70, 80), true, heavy)
+	else:
+		enemy_lunge = max(enemy_lunge, lunge)
+		enemy_scale_boost = max(enemy_scale_boost, 0.16 if heavy else 0.1)
+		_spawn_slash(enemy_sprite.global_position + Vector2(20, 80), false, heavy)
+
+func _play_hit_animation(defender: Fighter, blocked: bool, move: Dictionary) -> void:
+	var heavy := move.get("tags", []).has("heavy")
+	if defender.is_player:
+		player_hit_bump = max(player_hit_bump, 30.0 if heavy else 18.0)
+		player_sprite.modulate = Color(1.0, 0.75, 0.75) if not blocked else Color(0.8, 0.95, 1.0)
+	else:
+		enemy_hit_bump = max(enemy_hit_bump, 30.0 if heavy else 18.0)
+		enemy_sprite.modulate = Color(1.0, 0.75, 0.75) if not blocked else Color(0.8, 0.95, 1.0)
+	var flash_color := Color(1, 0.9, 0.85, 0.24)
+	if blocked:
+		flash_color = Color(0.6, 0.85, 1.0, 0.2)
+	impact_flash.color = flash_color
+	impact_flash.modulate.a = flash_color.a
+
+func _play_defense_animation(target: Fighter, dodge: bool) -> void:
+	if target.is_player:
+		if dodge:
+			player_hit_bump = -24.0
+			player_sprite.modulate = Color(0.85, 1.0, 1.0)
+		else:
+			player_sprite.modulate = Color(0.8, 0.95, 1.0)
+	else:
+		if dodge:
+			enemy_hit_bump = 24.0
+			enemy_sprite.modulate = Color(0.85, 1.0, 1.0)
+		else:
+			enemy_sprite.modulate = Color(0.8, 0.95, 1.0)
+
+func _spawn_slash(pos: Vector2, left_to_right: bool, heavy: bool) -> void:
+	var slash := ColorRect.new()
+	slash.custom_minimum_size = Vector2(80 if heavy else 56, 10 if heavy else 6)
+	slash.position = slash_layer.get_global_transform().affine_inverse() * pos
+	slash.pivot_offset = slash.custom_minimum_size * 0.5
+	slash.rotation = deg_to_rad(18 if left_to_right else -18)
+	slash.color = Color(1.0, 0.95, 0.85, 0.9) if heavy else Color(0.7, 0.9, 1.0, 0.85)
+	slash_layer.add_child(slash)
+	var t = create_tween()
+	t.tween_property(slash, "scale", Vector2(1.5, 1.1), 0.06)
+	t.parallel().tween_property(slash, "modulate:a", 0.0, 0.12)
+	t.parallel().tween_property(slash, "position:x", slash.position.x + (34 if left_to_right else -34), 0.12)
+	t.finished.connect(func(): slash.queue_free())
 
 func _tuned_move(move_data: Dictionary, from_player: bool) -> Dictionary:
 	var tuned = move_data.duplicate(true)
@@ -184,18 +253,16 @@ func _move_allowed(prev: Dictionary, nxt: Dictionary) -> bool:
 
 func _update_visual_positions() -> void:
 	var t = clamp(distance / 260.0, 0.0, 1.0)
-	player_sprite.position.x = lerp(360.0, 560.0, 1.0 - t)
-	enemy_sprite.position.x = lerp(820.0, 640.0, 1.0 - t)
+	player_sprite.position.x = lerp(360.0, 560.0, 1.0 - t) + player_lunge - player_hit_bump
+	enemy_sprite.position.x = lerp(820.0, 640.0, 1.0 - t) - enemy_lunge + enemy_hit_bump
 	player_sprite.color = Color("5cc8ff") if player.state != Fighter.State.STAGGER else Color("ffd166")
 	enemy_sprite.color = Color("ff6b6b") if enemy.state != Fighter.State.STAGGER else Color("ffd166")
 	if player.state == Fighter.State.STARTUP:
-		player_sprite.scale = Vector2(1.1, 1.1)
-	else:
-		player_sprite.scale = Vector2.ONE
+		player_scale_boost = max(player_scale_boost, 0.06)
 	if enemy.state == Fighter.State.STARTUP:
-		enemy_sprite.scale = Vector2(1.1, 1.1)
-	else:
-		enemy_sprite.scale = Vector2.ONE
+		enemy_scale_boost = max(enemy_scale_boost, 0.06)
+	player_sprite.scale = Vector2.ONE * (1.0 + player_scale_boost)
+	enemy_sprite.scale = Vector2.ONE * (1.0 + enemy_scale_boost)
 
 func _update_ui() -> void:
 	player_hp.max_value = player.max_hp
@@ -238,6 +305,16 @@ func _update_fx(delta: float) -> void:
 		telegraph_label.modulate.a = max(0.0, telegraph_label.modulate.a - delta * 1.2)
 		if telegraph_label.modulate.a <= 0.05:
 			telegraph_label.text = ""
+	if impact_flash.modulate.a > 0.0:
+		impact_flash.modulate.a = max(0.0, impact_flash.modulate.a - delta * 3.2)
+
+func _decay_animation_params(delta: float) -> void:
+	player_lunge = move_toward(player_lunge, 0.0, 220.0 * delta)
+	enemy_lunge = move_toward(enemy_lunge, 0.0, 220.0 * delta)
+	player_hit_bump = move_toward(player_hit_bump, 0.0, 260.0 * delta)
+	enemy_hit_bump = move_toward(enemy_hit_bump, 0.0, 260.0 * delta)
+	player_scale_boost = move_toward(player_scale_boost, 0.0, 2.8 * delta)
+	enemy_scale_boost = move_toward(enemy_scale_boost, 0.0, 2.8 * delta)
 
 func _finish_fight() -> void:
 	RunManager.player_stats["hp"] = player.hp
